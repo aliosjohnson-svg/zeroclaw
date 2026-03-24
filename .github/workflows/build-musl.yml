@@ -42,4 +42,14 @@ jobs:
           CC_aarch64_unknown_linux_musl: aarch64-linux-gnu-gcc
           CXX_aarch64_unknown_linux_musl: aarch64-linux-gnu-g++
           SQLITE3_MUSL: "1"
-          LIBSQLITE
+          LIBSQLITE3_FLAGS: "-DSQLITE_OS_UNIX=1 -D_FILE_OFFSET_BITS=0"
+          CFLAGS_aarch64_unknown_linux_musl: "-D_FILE_OFFSET_BITS=0 -DSQLITE_OS_UNIX=1"
+        run: |
+          cargo build --release --target aarch64-unknown-linux-musl --locked -j2
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zeroclaw-aarch64-musl
+          path: target/aarch64-unknown-linux-musl/release/zeroclaw
+          retention-days: 7
