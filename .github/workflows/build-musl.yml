@@ -28,22 +28,18 @@ jobs:
       - name: Configure cargo
         run: |
           mkdir -p ~/.cargo
-          cat >> ~/.cargo/config.toml << 'CARGO'
+          cat > ~/.cargo/config.toml << 'EOF'
           [target.aarch64-unknown-linux-musl]
           linker = "aarch64-linux-gnu-gcc"
-          CARGO
+          rustflags = [
+            "-C", "link-arg=-lgcc",
+          ]
+          EOF
 
       - name: Build
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
           CC_aarch64_unknown_linux_musl: aarch64-linux-gnu-gcc
           CXX_aarch64_unknown_linux_musl: aarch64-linux-gnu-g++
-        run: |
-          cargo build --release --target aarch64-unknown-linux-musl --locked -j2
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: zeroclaw-aarch64-musl
-          path: target/aarch64-unknown-linux-musl/release/zeroclaw
-          retention-days: 7
+          SQLITE3_MUSL: "1"
+          LIBSQLITE
