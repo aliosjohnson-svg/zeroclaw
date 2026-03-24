@@ -16,34 +16,30 @@ jobs:
         with:
           targets: aarch64-unknown-linux-musl
 
-      - name: Install cross-compile tools
+      - name: Install musl cross toolchain
         run: |
           sudo apt update
-          sudo apt install -y \
-            gcc-aarch64-linux-gnu \
-            g++-aarch64-linux-gnu \
-            musl-tools \
-            musl-dev
+          sudo apt install -y curl xz-utils
+          # 下载专用的 musl 交叉编译工具链
+          curl -fsSL https://musl.cc/aarch64-linux-musl-cross.tgz -o musl-cross.tgz
+          tar -xf musl-cross.tgz
+          echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
 
       - name: Configure cargo
         run: |
           mkdir -p ~/.cargo
           cat > ~/.cargo/config.toml << 'EOF'
           [target.aarch64-unknown-linux-musl]
-          linker = "aarch64-linux-gnu-gcc"
-          rustflags = [
-            "-C", "link-arg=-lgcc",
-          ]
+          linker = "aarch64-linux-musl-gcc"
           EOF
 
       - name: Build
         env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
-          CC_aarch64_unknown_linux_musl: aarch64-linux-gnu-gcc
-          CXX_aarch64_unknown_linux_musl: aarch64-linux-gnu-g++
-          SQLITE3_MUSL: "1"
-          LIBSQLITE3_FLAGS: "-DSQLITE_OS_UNIX=1 -D_FILE_OFFSET_BITS=0"
-          CFLAGS_aarch64_unknown_linux_musl: "-D_FILE_OFFSET_BITS=0 -DSQLITE_OS_UNIX=1"
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-musl-gcc
+          CC_aarch64_unknown_linux_musl: aarch64-linux-musl-gcc
+          CXX_aarch64_unknown_linux_musl: aarch64-linux-musl-g++
+          AR_aarch64_unknown_linux_musl: aarch64-linux-musl-ar
+          CFLAGS_aarch64_unknown_linux_musl: "-D_FORTIFY_SOURCE=0"
         run: |
           cargo build --release --target aarch64-unknown-linux-musl --locked -j2
 
